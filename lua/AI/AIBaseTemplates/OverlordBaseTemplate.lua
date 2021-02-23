@@ -1,6 +1,9 @@
 BaseBuilderTemplate {
     BaseTemplateName = 'OverloadAITemplateBase',
-    Builders = {},
+    Builders = {
+        'OverlordEngineerFactoryConstruction',
+        'OverlordOpeningFactory',
+    },
     NonCheatBuilders = {},
     BaseSettings = {},
     ExpansionFunction = function(aiBrain, location, markerType)
