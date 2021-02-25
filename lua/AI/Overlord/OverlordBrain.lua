@@ -26,9 +26,9 @@ OverlordCondition = {}
 
 OverlordAction = {}
 
-OverlordRuleSet
+OverlordRuleSet =
     { name = 'opening'
-    , Rule
+    , Rule =
         { name = ''
         , conditions =
             {
@@ -39,8 +39,14 @@ OverlordRuleSet
         }
     }
 
+-- Objectives: decision to accomplish something
+-- Conditions: criteria that must be met in order to consider objective ready to start
+-- Failed condition checks will suggest possible objectives to meet condition
 
-OverlordStrategy
+-- information timestamped
+-- all information has expiry time
+
+OverlordStrategy =
     { name = 'T1 Rush'
     , objectives =
         { { 'Eliminate Enemy Commander with T1 forces', 100 }
@@ -48,10 +54,18 @@ OverlordStrategy
         }
     }
 
-OverlordObjective
-    { name = 'Eliminate Enemy Commander with T1 forces'
+OverlordObjective =
+    { name = 'WinTheMatch'
+    }
+
+OverlordObjective =
+    { name = 'AvoidLosingTheMatch'
+    }
+
+OverlordObjective =
+    { name = 'EliminateEnemyCommander'
     , triggerConditions =
-        { { conditionName = 'TargetPlayerCommanderLocationKnown', onFailureGoal = 'FindTargetPlayerCommanderLocation' }
+        { { conditionName = 'TargetEnemyCommanderLocationKnown', onFailureGoal = 'FindTargetPlayerCommanderLocation' }
         , { conditionName = 'StrongEnoughToAttackEnemyCommander', onFailureGoal = 'BuildStrongerAttackForce' }
         }
     , actionsOnTrigger =
@@ -66,9 +80,44 @@ OverlordObjective
         }
     }
 
+-- ObjectivesByTags =
+--     [
+--         'NewT1LandFactory' => {}
+--     ]
+
+ObjectiveCondition =
+    { name = 'TargetEnemyCommanderLocationKnown'
+    , correctiveActionObjectives =
+        { 'FindTargetEnemyCommanderLocation' }
+    }
+
+ObjectiveCondition =
+    { name = 'HasT1EnoughAirFactories'
+    }
+
+ObjectiveCondition =
+    { name = 'HasT1EnoughLandFactories'
+    }
+
+OverlordObjective =
+    { name = 'FindEnemyCommanderWithAirScout'
+    }
+
+OverlordObjective =
+    { name = 'BuildT1AirFactory'
+    }
+
+OverlordObjective =
+    { name = 'BuildT1LandFactory'
+    }
+
+OverlordObjective =
+    { name = 'BuildT1Mex'
+    }
+
 function TargetPlayerCommanderLocationKnown(aiBrain)
     --aiBrain.enemyPlayer[aiBrain.targetPlayer].commander.location
-    return false
+    return false, 'EnemyCommanderLocation'
 end
 
 function StrongEnoughToAttackEnemyCommander(aiBrain)
