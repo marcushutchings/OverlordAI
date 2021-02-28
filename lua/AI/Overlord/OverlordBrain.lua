@@ -4,40 +4,49 @@ OverlordAIBrain = Class() {
     availableOrderActions = 1
     availableIntelActions = 1
 
-    DoAction = function(self, action)
-    end
+    -- DoAction = function(self, action)
+    -- end
 
-    ChooseAction = function(self)
-        local chosenAction
-        return chosenAction
-    end
+    -- ChooseAction = function(self)
+    --     local chosenAction
+    --     return chosenAction
+    -- end
 
 }
 
-OverlordState = {}
+-- function OverlordAIBrain:new()
+--     newBrain = Class() {
+--         availableOrderActions = 1
+--         availableIntelActions = 1
+--     }
+--     LOG('* AI-Overlord: OverlordAIBrain:new() - new Brain Created.')
+--     return newBrain
+-- end
 
-OverlordDifficultyChart =
-    { ['easy'] = { level = 'easy', orderInterval = 50, intelInterval = 50 }
-    , ['medium'] = { level = 'medium', orderInterval = 10, intelInterval = 10 }
-    , ['hard'] = { level = 'hard', orderInterval = 1, intelInterval = 1  }
-}
+-- OverlordState = {}
 
-OverlordCondition = {}
+-- OverlordDifficultyChart =
+--     { ['easy'] = { level = 'easy', orderInterval = 50, intelInterval = 50 }
+--     , ['medium'] = { level = 'medium', orderInterval = 10, intelInterval = 10 }
+--     , ['hard'] = { level = 'hard', orderInterval = 1, intelInterval = 1  }
+-- }
 
-OverlordAction = {}
+-- OverlordCondition = {}
 
-OverlordRuleSet =
-    { name = 'opening'
-    , Rule =
-        { name = ''
-        , conditions =
-            {
-            }
-        , actions =
-            {
-            }
-        }
-    }
+-- OverlordAction = {}
+
+-- OverlordRuleSet =
+--     { name = 'opening'
+--     , Rule =
+--         { name = ''
+--         , conditions =
+--             {
+--             }
+--         , actions =
+--             {
+--             }
+--         }
+--     }
 
 -- Objectives: decision to accomplish something
 -- Conditions: criteria that must be met in order to consider objective ready to start
@@ -46,87 +55,87 @@ OverlordRuleSet =
 -- information timestamped
 -- all information has expiry time
 
-OverlordStrategy =
-    { name = 'T1 Rush'
-    , objectives =
-        { { 'Eliminate Enemy Commander with T1 forces', 100 }
-        , { 'Eliminate Enemy Mexes', 90 }
-        }
-    }
+-- OverlordStrategy =
+--     { name = 'T1 Rush'
+--     , objectives =
+--         { { 'Eliminate Enemy Commander with T1 forces', 100 }
+--         , { 'Eliminate Enemy Mexes', 90 }
+--         }
+--     }
 
-OverlordObjective =
-    { name = 'WinTheMatch'
-    }
+-- OverlordObjective =
+--     { name = 'WinTheMatch'
+--     }
 
-OverlordObjective =
-    { name = 'AvoidLosingTheMatch'
-    }
+-- OverlordObjective =
+--     { name = 'AvoidLosingTheMatch'
+--     }
 
-OverlordObjective =
-    { name = 'EliminateEnemyCommander'
-    , triggerConditions =
-        { { conditionName = 'TargetEnemyCommanderLocationKnown', onFailureGoal = 'FindTargetPlayerCommanderLocation' }
-        , { conditionName = 'StrongEnoughToAttackEnemyCommander', onFailureGoal = 'BuildStrongerAttackForce' }
-        }
-    , actionsOnTrigger =
-        { { 'Focus fire on enemy commander' }
-        }
-    , completionConditions =
-        { { 'IsEnemyCommanderEliminated' }
-        }
-    , baseTacticStrength = 100
-    , tacticStrengthModifiers =
-        { { 'EnemyCommanderIsVulnerable', 3 }
-        }
-    }
+-- OverlordObjective =
+--     { name = 'EliminateEnemyCommander'
+--     , triggerConditions =
+--         { { conditionName = 'TargetEnemyCommanderLocationKnown', onFailureGoal = 'FindTargetPlayerCommanderLocation' }
+--         , { conditionName = 'StrongEnoughToAttackEnemyCommander', onFailureGoal = 'BuildStrongerAttackForce' }
+--         }
+--     , actionsOnTrigger =
+--         { { 'Focus fire on enemy commander' }
+--         }
+--     , completionConditions =
+--         { { 'IsEnemyCommanderEliminated' }
+--         }
+--     , baseTacticStrength = 100
+--     , tacticStrengthModifiers =
+--         { { 'EnemyCommanderIsVulnerable', 3 }
+--         }
+--     }
 
--- ObjectivesByTags =
---     [
---         'NewT1LandFactory' => {}
---     ]
+-- -- ObjectivesByTags =
+-- --     [
+-- --         'NewT1LandFactory' => {}
+-- --     ]
 
-ObjectiveCondition =
-    { name = 'TargetEnemyCommanderLocationKnown'
-    , correctiveActionObjectives =
-        { 'FindTargetEnemyCommanderLocation' }
-    }
+-- ObjectiveCondition =
+--     { name = 'TargetEnemyCommanderLocationKnown'
+--     , correctiveActionObjectives =
+--         { 'FindTargetEnemyCommanderLocation' }
+--     }
 
-ObjectiveCondition =
-    { name = 'HasT1EnoughAirFactories'
-    }
+-- ObjectiveCondition =
+--     { name = 'HasT1EnoughAirFactories'
+--     }
 
-ObjectiveCondition =
-    { name = 'HasT1EnoughLandFactories'
-    }
+-- ObjectiveCondition =
+--     { name = 'HasT1EnoughLandFactories'
+--     }
 
-OverlordObjective =
-    { name = 'FindEnemyCommanderWithAirScout'
-    }
+-- OverlordObjective =
+--     { name = 'FindEnemyCommanderWithAirScout'
+--     }
 
-OverlordObjective =
-    { name = 'BuildT1AirFactory'
-    }
+-- OverlordObjective =
+--     { name = 'BuildT1AirFactory'
+--     }
 
-OverlordObjective =
-    { name = 'BuildT1LandFactory'
-    }
+-- OverlordObjective =
+--     { name = 'BuildT1LandFactory'
+--     }
 
-OverlordObjective =
-    { name = 'BuildT1Mex'
-    }
+-- OverlordObjective =
+--     { name = 'BuildT1Mex'
+--     }
 
-function TargetPlayerCommanderLocationKnown(aiBrain)
-    --aiBrain.enemyPlayer[aiBrain.targetPlayer].commander.location
-    return false, 'EnemyCommanderLocation'
-end
+-- function TargetPlayerCommanderLocationKnown(aiBrain)
+--     --aiBrain.enemyPlayer[aiBrain.targetPlayer].commander.location
+--     return false, 'EnemyCommanderLocation'
+-- end
 
-function StrongEnoughToAttackEnemyCommander(aiBrain)
-    -- reason for failure
-    -- 1. Commander on own but not enough forces
-    -- 2. Commander in base bot not enough forces
-    -- 3. Commander support forces too strong
-    return false
-end
+-- function StrongEnoughToAttackEnemyCommander(aiBrain)
+--     -- reason for failure
+--     -- 1. Commander on own but not enough forces
+--     -- 2. Commander in base bot not enough forces
+--     -- 3. Commander support forces too strong
+--     return false
+-- end
 
 -- FindTargetPlayerCommanderLocation
 -- No scout units
@@ -152,18 +161,18 @@ end
 --         }
 --     }
 
-OverlordObjective
-    { name = 'Eliminate Enemy Mexes'
-    , conditions =
-        { { 'Enemy Mex Count At Least', { 1 } }
-        }
-    , actionsOnTrigger =
-        { { '' }
-        }
-    , tacticStrengthModifiers =
-        { { 'EnemyCommanderIsVulnerable', 1 }
-        }
-    }
+-- OverlordObjective
+--     { name = 'Eliminate Enemy Mexes'
+--     , conditions =
+--         { { 'Enemy Mex Count At Least', { 1 } }
+--         }
+--     , actionsOnTrigger =
+--         { { '' }
+--         }
+--     , tacticStrengthModifiers =
+--         { { 'EnemyCommanderIsVulnerable', 1 }
+--         }
+--     }
 
 -- TargetPlayerCommanderLocationKnown
 -- Checks last known enemy commander location

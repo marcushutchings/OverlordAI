@@ -2,6 +2,11 @@ WARN('['..string.gsub(debug.getinfo(1).source, ".*\\(.*.lua)", "%1")..', line:'.
 
 local lastCall = 0
 
+WARN('['..string.gsub(debug.getinfo(1).source, ".*\\(.*.lua)", "%1")..', line:'..debug.getinfo(1).currentline..'] * AI-Overlord: offset aibrain.lua' )
+
+local utils = import("/mods/overlordai/lua/AI/Overlord/utils.lua")
+local ovrlrdBrain= import("/mods/overlordai/lua/AI/Overlord/OverlordBrain.lua")
+
 OverlordSavedAIBrainClass = AIBrain
 AIBrain = Class(OverlordSavedAIBrainClass) {
 
@@ -40,6 +45,8 @@ AIBrain = Class(OverlordSavedAIBrainClass) {
 
         self.overlordObservationTickDelay = 1
         self.overlordActionTickDelay = 1
+
+        -- self.overloadAiBrain = OverlordAIBrain:new()
     end,
 
     InitializeSkirmishSystems = function(self)
