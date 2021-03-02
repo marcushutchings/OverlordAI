@@ -1,8 +1,12 @@
 
-OverlordAIBrain = Class() {
+-- x = x or v equiv to if not x then x = v end
+-- x = (a and b) or c  eqiv. x = a ? b : c
+-- numeric for loop condition stuff only gets called once
 
-    availableOrderActions = 1
-    availableIntelActions = 1
+OverlordAIBrain = Class {
+
+    availableOrderActions = 1,
+    availableIntelActions = 1,
 
     -- DoAction = function(self, action)
     -- end
@@ -12,16 +16,13 @@ OverlordAIBrain = Class() {
     --     return chosenAction
     -- end
 
+
+    --    LOG('* AI-Overlord: OverlordAIBrain:new() - new Brain Created.')
 }
 
--- function OverlordAIBrain:new()
---     newBrain = Class() {
---         availableOrderActions = 1
---         availableIntelActions = 1
---     }
---     LOG('* AI-Overlord: OverlordAIBrain:new() - new Brain Created.')
---     return newBrain
--- end
+simpleBrainFunction = function()
+    LOG('* AI-Overlord: OnCreateAI() found AI-Overlord  Name: Simple Brain Function')
+end
 
 -- OverlordState = {}
 

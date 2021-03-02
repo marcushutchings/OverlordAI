@@ -5,9 +5,9 @@ local lastCall = 0
 WARN('['..string.gsub(debug.getinfo(1).source, ".*\\(.*.lua)", "%1")..', line:'..debug.getinfo(1).currentline..'] * AI-Overlord: offset aibrain.lua' )
 
 local utils = import("/mods/overlordai/lua/AI/Overlord/utils.lua")
-local ovrlrdBrain= import("/mods/overlordai/lua/AI/Overlord/OverlordBrain.lua")
+local overlordBrain = import("/mods/overlordai/lua/AI/Overlord/OverlordBrain.lua")
 
-OverlordSavedAIBrainClass = AIBrain
+local OverlordSavedAIBrainClass = AIBrain
 AIBrain = Class(OverlordSavedAIBrainClass) {
 
     OnCreateAI = function(self, planName)
@@ -46,7 +46,8 @@ AIBrain = Class(OverlordSavedAIBrainClass) {
         self.overlordObservationTickDelay = 1
         self.overlordActionTickDelay = 1
 
-        -- self.overloadAiBrain = OverlordAIBrain:new()
+        --self.overloadAiBrain = ovrlrdBrain.OverlordAIBrain:new()
+        simpleFunction()
     end,
 
     InitializeSkirmishSystems = function(self)
@@ -63,3 +64,8 @@ AIBrain = Class(OverlordSavedAIBrainClass) {
         return self.overlordObservationTickDelay
     end,
 }
+
+function simpleFunction ()
+    LOG('* AI-Overlord: OnCreateAI() found AI-Overlord  Name: Simple Function')
+    overlordBrain.simpleBrainFunction()
+end

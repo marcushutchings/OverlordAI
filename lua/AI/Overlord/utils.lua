@@ -1,5 +1,5 @@
 
-function filter(tbl, func)
+filter = function(tbl, func)
     local t = {}
     for k, v in pairs(tbl) do
         if f(v) then
@@ -9,7 +9,7 @@ function filter(tbl, func)
     return t
 end
 
-function find(tbl, func)
+find = function(tbl, func)
     for k, v in pairs(tbl) do
         if f(v) then
             return v
@@ -18,13 +18,13 @@ function find(tbl, func)
     return nil
 end
 
-function forEach(tbl, func)
+forEach = function(tbl, func)
     for k, v in pairs(tbl) do
         f(v)
     end
 end
 
-function map(tbl, func)
+map = function(tbl, func)
     local t = {}
     for k, v in pairs(tbl) do
         t[k] = f(v)
@@ -32,7 +32,7 @@ function map(tbl, func)
     return t
 end
 
-function reduce(tbl, initialValue, func)
+reduce = function(tbl, initialValue, func)
     local rv = initialValue
     for k, v in pairs(tbl) do
         rv = f(rv, v)
