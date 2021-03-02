@@ -3,12 +3,17 @@
 -- x = (a and b) or c  eqiv. x = a ? b : c
 -- numeric for loop condition stuff only gets called once
 
+utils = import('utils.lua')
+
 OverlordAIBrain = Class {
 
+    AliveTicks = 0,
     availableOrderActions = 1,
     availableIntelActions = 1,
     refAiBrain = {},
     Trash = {},
+
+    Facts = {},
 
     DoAction = function(self, action)
     end,
@@ -23,11 +28,17 @@ OverlordAIBrain = Class {
         self.Trash = TrashBag()
         self.refAiBrain = aiBrain
 
+        self.Facts.EnemyCommanderLocation = CreateNewFact(true, self.AliveTicks + 3000)
+
         self:ForkThread(self.Think)
     end,
 
     Think = function(self)
         LOG('* AI-Overlord: Think() Started')
+        while true do
+            self.AliveTicks = self.AliveTicks + 1
+            WaitTicks(1)
+        end
         LOG('* AI-Overlord: Think() Stopped')
     end,
 
@@ -49,8 +60,24 @@ OverlordAIBrain = Class {
         end
     end,
 
+    IsFactTrue = function(self, fact)
+        return self:IsFactValid(fact) and fact.Value
+    end,
+    
+    IsFactValid = function(self, fact)
+        return fact and (self.AliveTicks < fact.ExpireAtTick)
+    end,
+
     --    LOG('* AI-Overlord: OverlordAIBrain:new() - new Brain Created.')
 }
+
+function CreateNewFact(value, expiresAtTick)
+    newFact =
+        { Value = value
+        , ExpireAtTick = expiresAtTick
+        }
+    return newFact
+end
 
 function CreateOverlordAIBrain(aiBrain)
     local newBrain = OverlordAIBrain()
@@ -68,21 +95,6 @@ end
 
 -- OverlordCondition = {}
 
--- OverlordAction = {}
-
--- OverlordRuleSet =
---     { name = 'opening'
---     , Rule =
---         { name = ''
---         , conditions =
---             {
---             }
---         , actions =
---             {
---             }
---         }
---     }
-
 -- Objectives: decision to accomplish something
 -- Conditions: criteria that must be met in order to consider objective ready to start
 -- Failed condition checks will suggest possible objectives to meet condition
@@ -90,13 +102,40 @@ end
 -- information timestamped
 -- all information has expiry time
 
--- OverlordStrategy =
---     { name = 'T1 Rush'
---     , objectives =
---         { { 'Eliminate Enemy Commander with T1 forces', 100 }
---         , { 'Eliminate Enemy Mexes', 90 }
+-- Strategies = {
+--     T1Rush = {
+--         OverlordStrategy =
+--         { name = 'T1 Rush'
+--         , objectives =
+--             { { 'Eliminate Enemy Commander with T1 forces', 100 }
+--             , { 'Eliminate Enemy Mexes', 90 }
+--             }
 --         }
---     }
+--     },
+-- }
+
+-- TacticGroups = {
+--     Buildings = {
+--         Tactics = {
+--         },
+--     },
+--     UnitProduction = {
+
+--     },
+--     Combat = {
+--         Tactics = {
+--             EliminateEnemyCommander = {
+--                 preconditions = {},
+--             }
+--         },
+--     },
+-- }
+
+-- Preconditions = {
+--     EnemyCommanderLocationIsKnown = function(brain) return true end,
+-- }
+
+
 
 -- OverlordObjective =
 --     { name = 'WinTheMatch'
