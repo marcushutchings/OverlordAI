@@ -7,21 +7,55 @@ OverlordAIBrain = Class {
 
     availableOrderActions = 1,
     availableIntelActions = 1,
+    refAiBrain = {},
+    Trash = {},
 
-    -- DoAction = function(self, action)
-    -- end
+    DoAction = function(self, action)
+    end,
 
     -- ChooseAction = function(self)
     --     local chosenAction
     --     return chosenAction
     -- end
 
+    Initialize = function(self, aiBrain)
+        LOG('* AI-Overlord: OverlordAIBrain() Initializing')
+        self.Trash = TrashBag()
+        self.refAiBrain = aiBrain
+
+        self:ForkThread(self.Think)
+    end,
+
+    Think = function(self)
+        LOG('* AI-Overlord: Think() Started')
+        LOG('* AI-Overlord: Think() Stopped')
+    end,
+
+    ForkThread = function(self, fn, ...)
+        if fn then
+            local thread = ForkThread(fn, self, unpack(arg))
+            self.Trash:Add(thread)
+            return thread
+        else
+            return nil
+        end
+    end,
+
+    Destroy = function(self)
+        LOG('* AI-Overlord: OnDestroy() called')
+        self.aiBrain = nil
+        if self.Trash then
+            self.Trash:Destroy()
+        end
+    end,
 
     --    LOG('* AI-Overlord: OverlordAIBrain:new() - new Brain Created.')
 }
 
-simpleBrainFunction = function()
-    LOG('* AI-Overlord: OnCreateAI() found AI-Overlord  Name: Simple Brain Function')
+function CreateOverlordAIBrain(aiBrain)
+    local newBrain = OverlordAIBrain()
+    newBrain:Initialize(aiBrain)
+    return newBrain
 end
 
 -- OverlordState = {}
