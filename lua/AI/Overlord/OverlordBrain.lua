@@ -1,3 +1,4 @@
+local ScenarioUtils = import('/lua/sim/ScenarioUtilities.lua')
 
 -- x = x or v equiv to if not x then x = v end
 -- x = (a and b) or c  eqiv. x = a ? b : c
@@ -13,7 +14,14 @@ OverlordAIBrain = Class {
     refAiBrain = {},
     Trash = {},
 
-    Facts = {},
+    Facts =
+        { Commanders = {}
+        },
+
+    RequestStateChangeTo = nil,
+    CurrentOverlordState = nil,
+
+    OverlordStates = {},
 
     DoAction = function(self, action)
     end,
@@ -27,16 +35,54 @@ OverlordAIBrain = Class {
         LOG('* AI-Overlord: OverlordAIBrain() Initializing')
         self.Trash = TrashBag()
         self.refAiBrain = aiBrain
-
-        self.Facts.EnemyCommanderLocation = CreateNewFact(true, self.AliveTicks + 3000)
-
+        self.CurrentOverlordState = 'Initialize'
+        self.OverlordStates = self:InitializeOverlordStates()
+        self.Facts.Commanders = self:InitializeCommandersIntel()
         self:ForkThread(self.Think)
+    end,
+
+    InitializeOverlordStates = function(self)
+        return {
+            Initialize = self.InitializeTick,
+            Operate = self.OperateTick,
+            Deactivate = self.DeactivateTick,
+        }
+    end,
+
+    InitializeCommandersIntel = function(self)
+        return utils.map(ScenarioInfo.ArmySetup, function(token, army) return {} end)
+    end,
+
+    InitializeTick = function(self)
+        self:AddInitialEnemyThreat()
+        self.RequestStateChangeTo = 'Operate'
+    end,
+
+    OperateTick = function(self)
+        if IsGameOver() then
+            self.RequestStateChangeTo = 'Deactivate'
+        end
+    end,
+
+    DeactivateTick = function(self)
+    end,
+
+    AlwaysTick = function(self)
+        self.AliveTicks = self.AliveTicks + 1
+
+        if self.RequestStateChangeTo then
+            self.CurrentOverlordState = self.RequestStateChangeTo
+            self.RequestStateChangeTo = nil
+        end
     end,
 
     Think = function(self)
         LOG('* AI-Overlord: Think() Started')
         while true do
-            self.AliveTicks = self.AliveTicks + 1
+            self:AlwaysTick()
+            if self.OverlordStates[self.CurrentOverlordState] then
+                self.OverlordStates[self.CurrentOverlordState](self)
+            end
             WaitTicks(1)
         end
         LOG('* AI-Overlord: Think() Stopped')
@@ -66,6 +112,35 @@ OverlordAIBrain = Class {
     
     IsFactValid = function(self, fact)
         return fact and (self.AliveTicks < fact.ExpireAtTick)
+    end,
+
+    SetFact = function (self, name, data, expiresOnTick)
+        self.Facts[name] = CreateNewFact(data, expiresOnTick)
+    end,
+
+    RunStateInitialize = function(self)
+        -- TODO: Get the real commanders location at start
+        self.Facts.EnemyCommanderLocation = CreateNewFact(true, self.AliveTicks + 3000)
+    end,
+
+    AddInitialEnemyThreat = function(self)
+        local aiBrain = self.refAiBrain
+        local myArmy = ScenarioInfo.ArmySetup[aiBrain.Name]
+
+        if ScenarioInfo.Options.TeamSpawn == 'fixed' then
+            --Spawn locations were fixed. We know exactly where our opponents are. 
+            
+            -- local CommanderLocations = utils.filter(ScenarioInfo.ArmySetup, function(token, army)
+            --     local ArmyIsNotMine = (army.ArmyIndex ~= myArmy.ArmyIndex)
+            --     local ArmyIsEnemyTeam = (army.Team ~= myArmy.Team)
+            --     local ArmyIsEnemyToEveryone = (army.Team == 1) -- TODO: Check this is correct
+            --     return ArmyIsNotMine and (ArmyIsEnemyTeam or ArmyIsEnemyToEveryone)
+            -- end )
+            utils.forEach(ScenarioInfo.ArmySetup, function(token, army)
+                local startPos = ScenarioUtils.GetMarker(token).position
+                self.Facts.Commanders[token].location = CreateNewFact(startPos, 3000)
+            end)
+        end
     end,
 
     --    LOG('* AI-Overlord: OverlordAIBrain:new() - new Brain Created.')

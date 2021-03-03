@@ -1,6 +1,16 @@
+createStream = function()
+    newStream =
+    { Filter = filter
+    , Find = find
+    , ForEach = forEach
+    , Map = map
+    , Reduce = reduce
+    }
+    return newStream
+end
 
-filter = function(tbl, func)
-    local t = {}
+filter = function(tbl, f)
+    local t = createStream()
     for k, v in pairs(tbl) do
         if f(v) then
             t[k] = v
@@ -9,7 +19,7 @@ filter = function(tbl, func)
     return t
 end
 
-find = function(tbl, func)
+find = function(tbl, f)
     for k, v in pairs(tbl) do
         if f(v) then
             return v
@@ -18,24 +28,25 @@ find = function(tbl, func)
     return nil
 end
 
-forEach = function(tbl, func)
+forEach = function(tbl, f)
     for k, v in pairs(tbl) do
-        f(v)
+        f(k, v)
     end
 end
 
-map = function(tbl, func)
-    local t = {}
+map = function(tbl, f)
+    local t = createStream()
     for k, v in pairs(tbl) do
-        t[k] = f(v)
+        t[k] = f(k, v)
     end
     return t
 end
 
-reduce = function(tbl, initialValue, func)
+reduce = function(tbl, initialValue, f)
     local rv = initialValue
     for k, v in pairs(tbl) do
         rv = f(rv, v)
     end
     return rv
 end
+
