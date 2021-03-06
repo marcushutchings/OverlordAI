@@ -8,7 +8,6 @@ utils = import('utils.lua')
 
 OverlordAIBrain = Class {
 
-    AliveTicks = 0,
     availableOrderActions = 1,
     availableIntelActions = 1,
     refAiBrain = {},
@@ -16,10 +15,13 @@ OverlordAIBrain = Class {
 
     Facts =
         { Commanders = {}
+        , Armies = {}
         },
 
     RequestStateChangeTo = nil,
     CurrentOverlordState = nil,
+
+    CurrentAction = nil,
 
     OverlordStates = {},
 
@@ -54,8 +56,11 @@ OverlordAIBrain = Class {
     end,
 
     InitializeTick = function(self)
-        self:AddInitialEnemyThreat()
+        LOG('* AI-Overlord: ThinkInitializeTick()')
+        self:GetInitialCommanderStartPositions(self.Facts.Commanders)
         self.RequestStateChangeTo = 'Operate'
+        FindListOfPossibleBuildUnits(self.refAiBrain)
+        MakeResouceStrategicPoints()
     end,
 
     OperateTick = function(self)
@@ -68,8 +73,6 @@ OverlordAIBrain = Class {
     end,
 
     AlwaysTick = function(self)
-        self.AliveTicks = self.AliveTicks + 1
-
         if self.RequestStateChangeTo then
             self.CurrentOverlordState = self.RequestStateChangeTo
             self.RequestStateChangeTo = nil
@@ -118,14 +121,9 @@ OverlordAIBrain = Class {
         self.Facts[name] = CreateNewFact(data, expiresOnTick)
     end,
 
-    RunStateInitialize = function(self)
-        -- TODO: Get the real commanders location at start
-        self.Facts.EnemyCommanderLocation = CreateNewFact(true, self.AliveTicks + 3000)
-    end,
-
-    AddInitialEnemyThreat = function(self)
-        local aiBrain = self.refAiBrain
-        local myArmy = ScenarioInfo.ArmySetup[aiBrain.Name]
+    GetInitialCommanderStartPositions = function(self, commanders)
+        --local aiBrain = self.refAiBrain
+        --local myArmy = ScenarioInfo.ArmySetup[aiBrain.Name]
 
         if ScenarioInfo.Options.TeamSpawn == 'fixed' then
             --Spawn locations were fixed. We know exactly where our opponents are. 
@@ -136,9 +134,11 @@ OverlordAIBrain = Class {
             --     local ArmyIsEnemyToEveryone = (army.Team == 1) -- TODO: Check this is correct
             --     return ArmyIsNotMine and (ArmyIsEnemyTeam or ArmyIsEnemyToEveryone)
             -- end )
-            utils.forEach(ScenarioInfo.ArmySetup, function(token, army)
+            --utils.forEach(ScenarioInfo.ArmySetup, function(token, army)
+            commanders:ForEach(function(token, commander)
                 local startPos = ScenarioUtils.GetMarker(token).position
-                self.Facts.Commanders[token].location = CreateNewFact(startPos, 3000)
+                commander.Location = CreateNewFact(startPos, GetGameTick() + 3000)
+                --self.Facts.Commanders[token].location = CreateNewFact(startPos, 3000)
             end)
         end
     end,
@@ -159,6 +159,140 @@ function CreateOverlordAIBrain(aiBrain)
     newBrain:Initialize(aiBrain)
     return newBrain
 end
+
+function BuildT1Factory()
+end
+
+function ChooseStructureLocation()
+end
+
+function ChooseUnitToBuildStructure(brain)
+    -- ? ACU or engineer
+    -- ? build an engineer or send one over
+    -- ? build factory, then build engineer
+    -- if no engineers
+    -- if only ACU
+    -- if no factories
+    local availableBuilders = FindListOfPossibleBuildUnits(brain)
+                                :Filter( function(k, v) return UnitCanBuildStructure(brain, v) end )
+                                :Map( function(k, v) return {unit = v, score = SuitabilityOfUnitBuildingStructure(brain, v)} end );
+
+    return next(availableBuilders)
+end
+
+function UnitCanBuildStructure(brain, unit, structure)
+    return true
+end
+
+function FindListOfPossibleBuildUnits(brain, structureToBuild, locationToBuild)
+    -- LOG('* AI-Overlord unit list: ' .. v.UnitId)
+    return utils.map(brain:GetListOfUnits(categories.ENGINEER, false), function(k, v) return v end )
+end
+
+function FindListOfPossibleBuildSites(structureToBuild)
+end
+
+function SuitabilityOfStructureBeingBuiltAtLocation(structureToBuild, locationToBuild)
+end
+
+function SuitabilityOfUnitBuildingStructure(structureToBuild, locationToBuild, unitToCheck)
+    return 1
+end
+
+function SuitabilityOfFactoryBuildingAnEngineer(structureToBuild, locationToBuild, unitToCheck)
+end
+
+BuildingAT1Factory =
+    { Preconditons =
+        { 'HasChosenStructureLocation'
+        , 'HasSelectedUnitToBuildStructure'
+        }
+    , Activate = BuildT1Factory
+    }
+
+HasChosenStructureLocation =
+    { Activate = ChooseStructureLocation
+    }
+
+HasSelectedUnitToBuildStructure =
+    { Activate = ChooseUnitToBuildStructure
+    }
+    -- local nearbyByResources = table.getn(baseResource.Nearby) 
+    -- if nearbyByResources == 1 then
+    -- elseif nearbyByResources == 1 then
+function MakeResouceStrategicPoints()
+    local resourceProximityChart = GetResourceIndexAndProximityGraph(GetResources())
+
+    -- TODO: what about strange shapes, like long lines of Mex Points?
+    -- TODO: what about items near, but on vastly different heights?
+    -- TODO: what about items near, but cannot be reach from each other?
+
+    -- build chains
+    -- find centre point of chains
+    -- possibleLocations = resourceProximityChart:map(function(baseKey, proxyEntry)
+    --     return
+    --         { Resource = proxyEntry.Resource
+    --         , Points = table.getn()
+    --         , RelativeLocation = proxyEntry.Nearby:reduce({0, 0, 0}, function(k, rv, v)
+    --             return
+    --                 { rv[1] + v.RelativePosition[1]
+    --                 , rv[2] + v.RelativePosition[2]
+    --                 , rv[3] + v.RelativePosition[3]
+    --                 }
+    --             end)
+    --         }
+    -- end)
+
+    -- find possible locations that are too close to each other
+
+    -- collapse locations down to the few that are needed.
+
+end
+
+function GetResources()
+    -- v.type == "Mass" or "Hydrocarbon?"
+    -- v.position[1]-x,[2]-y,[3]-z
+    -- v.size
+    LOG('* AI-Overlord: Master table length: '..table.getn(Scenario.MasterChain._MASTERCHAIN_.Markers))
+
+    -- utils.map(ScenarioUtils.GetMarkers(), function(k,v) return v end):ForEach(
+    --     function(k,v)
+    --         utils.forEach(v,
+    --             function(k, v)
+    --                 --if (type(v) ~= "table") then
+    --                     LOG('* AI-Overlord: Checking Resource Attribute: '..k..' value:'..tostring(v))
+    --                 --end
+    --             end
+    --         )
+    --     end
+    -- )
+
+    return utils.filter(ScenarioUtils.GetMarkers(), function (k, v) return v.resource end)
+end
+
+function GetResourceIndexAndProximityGraph(resources)
+    local distanceThreshold = 25*25
+
+    resources:ForEach(function(k,v) LOG('* AI-Overlord: Resource: '..k ..' value type: '..v.type..
+                                        ' at ('..v.position[1]..','..v.position[2]..','..v.position[3]..')') end)
+
+    -- resources:map(function(baseKey, baseResource)
+    --     return { Resource = baseResource
+    --            , Nearby = resources:map(function(k, v) return GetRelativePosition(baseResource, v) end)
+    --                                :filter(function (k, v) return (v.distanceSqr <= distanceThreshold) end) } -- or (v.distanceSqr == 0)
+    --     end)
+end
+
+function GetRelativePosition(base, target)
+    local lat = target.position[1] - base.position[1]
+    local alt = target.position[2] - base.position[2]
+    local long = target.position[3] - base.position[3]
+    local distanceSqr = lat*lat + long*long
+    return { Resource = target, RelativePosition = {lat, alt, long}, DistanceSpr = distanceSqr }
+end
+
+--#region
+
 
 -- OverlordState = {}
 

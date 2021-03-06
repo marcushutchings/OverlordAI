@@ -1,18 +1,9 @@
-createStream = function()
-    newStream =
-    { Filter = filter
-    , Find = find
-    , ForEach = forEach
-    , Map = map
-    , Reduce = reduce
-    }
-    return newStream
-end
+
 
 filter = function(tbl, f)
-    local t = createStream()
+    local t = Stream:createStream()
     for k, v in pairs(tbl) do
-        if f(v) then
+        if f(k, v) then
             t[k] = v
         end
     end
@@ -21,7 +12,7 @@ end
 
 find = function(tbl, f)
     for k, v in pairs(tbl) do
-        if f(v) then
+        if f(k, v) then
             return v
         end
     end
@@ -35,9 +26,19 @@ forEach = function(tbl, f)
 end
 
 map = function(tbl, f)
-    local t = createStream()
+    local t = Stream:createStream()
     for k, v in pairs(tbl) do
         t[k] = f(k, v)
+    end
+    return t
+end
+
+-- like map(), but f() is a multiple return for the new Key and Value
+map2 = function(tbl, f)
+    local t = Stream:createStream()
+    for k, v in pairs(tbl) do
+        local kn, vn = f(k, v)
+        t[kn] = vn
     end
     return t
 end
@@ -45,8 +46,23 @@ end
 reduce = function(tbl, initialValue, f)
     local rv = initialValue
     for k, v in pairs(tbl) do
-        rv = f(rv, v)
+        rv = f(k, rv, v)
     end
     return rv
 end
 
+Stream =
+{ Filter = filter
+, Find = find
+, ForEach = forEach
+, Map = map
+, Map2 = map2
+, Reduce = reduce
+}
+Stream.__index = Stream
+
+function Stream:createStream(obj)
+    local newStream = obj or {}
+    setmetatable(newStream, self)
+    return newStream
+end
