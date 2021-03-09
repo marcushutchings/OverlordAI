@@ -25,6 +25,21 @@ forEach = function(tbl, f)
     end
 end
 
+join = function(tbl1, tbl2, f)
+    local t = Stream:createStream()
+    for k, v in pairs(tbl1) do
+        t[k] = v
+    end
+    for k, v in pairs(tbl2) do
+        if not t[k] then
+            t[k] = v
+        else
+            t[k] = f(k, t[k], v)
+        end
+    end
+    return t
+end
+
 map = function(tbl, f)
     local t = Stream:createStream()
     for k, v in pairs(tbl) do
@@ -55,6 +70,7 @@ Stream =
 { Filter = filter
 , Find = find
 , ForEach = forEach
+, Join = join
 , Map = map
 , Map2 = map2
 , Reduce = reduce
