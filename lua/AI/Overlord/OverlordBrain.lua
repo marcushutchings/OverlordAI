@@ -222,7 +222,11 @@ HasSelectedUnitToBuildStructure =
     -- elseif nearbyByResources == 1 then
 function MakeResouceStrategicPoints()
     local resourceProximityChart = GetResourcePointDendrogram(GetResources())
-    CompleteLinkageClustering(resourceProximityChart, 25*25)
+    local optimalCutOffDistance = GetOptimalCutOffThreshold(resourceProximityChart);
+    local filteredChart = FilterDendrogram(resourceProximityChart, optimalCutOffDistance);
+    
+    LOG('* AI-Overlord: Optimal Cutoff Distance: '..optimalCutOffDistance)
+    CompleteLinkageClustering(resourceProximityChart, optimalCutOffDistance)
 
     -- TODO: what about strange shapes, like long lines of Mex Points?
     -- TODO: what about items near, but on vastly different heights?
@@ -271,6 +275,34 @@ function GetResources()
     return utils.filter(ScenarioUtils.GetMarkers(), function (k, v) return v.resource end)
 end
 
+function GetOptimalCutOffThreshold(drenogram)
+    local minSize = 30*30
+    local maxSize = 40*40
+
+    local distances = drenogram:Reduce(utils.Stream:createStream(),
+        function(baseKey, t, baseResource)
+            return t:ConcatHashToArray(
+                baseResource.UnconnectedPoints:Filter(function(k,v) return v.DistanceSqr >= minSize end)
+                                                :Map(function(k,v) return v.DistanceSqr end))
+        end)
+    table.sort(distances)
+
+    local largestFoundLength = distances[table.getn(distances)]
+    local SmallestOverLimit = distances:Find(function(k,v) return v > maxSize end)
+
+    -- distances 
+    --     :Filter(function(k,v) return v <= SmallestOverLimit end)
+    --     :ForEach(function(k,v) LOG('* AI-Overlord: Resource: '..k..' dist: '..v) end)
+    local result = distances
+        :Filter(function(k,v) return v <= SmallestOverLimit end)
+        :Map(function(k,v) return {value = v, delta = distances[k+1] - v} end)
+        :Reduce({value = minSize, delta = 0}, function(k,t,v) return (v.delta > t.delta and v) or t end)
+        .value
+
+    LOG('* AI-Overlord: Optimal Size is: '..result)
+    return result
+end
+
 -- Dendrogram structure
 -- {
 --     ConnectedPoints = { [resourceKey] = resourceValue, },
@@ -279,23 +311,32 @@ end
 -- }
 
 function GetResourcePointDendrogram(resources)
-    local distanceThreshold = 25*25
+    local distanceThreshold = 30*30
 
     --resources:ForEach(function(k,v) LOG('* AI-Overlord: Resource: '..k ..' value type: '..v.type..
     --                                    ' at ('..v.position[1]..','..v.position[2]..','..v.position[3]..')') end)
 
     return resources:Map(function(baseKey, baseResource)
-        return  { ConnectedPoints = {[baseKey] = baseResource}
+        return  { ConnectedPoints = utils.Stream:createStream({[baseKey] = baseResource})
                 , UnconnectedPoints = resources:Map(function(k, v) return { DistanceSqr = GetRelativePosition(baseResource.position, v.position) } end)
-                                      :Filter(function (k, v) return (v.DistanceSqr <= distanceThreshold) and (v.DistanceSqr > 0) end)
-                                      --:Map(function(k,v) LOG('* AI-Overlord: '..baseKey..'->'..k..' dist: '..v.DistanceSqr) return v end)
+                                                --:Map(function(k,v) LOG('* AI-Overlord: '..baseKey..'->'..k..' dist: '..math.sqrt(v.DistanceSqr)) return v end)
+                                                --:Filter(function (k, v) return (v.DistanceSqr <= distanceThreshold) and (v.DistanceSqr > 0) end)
                 , PointData = {baseResource.position[1], baseResource.position[2], baseResource.position[3]}
                 }
         end)
 end
 
-function CompleteLinkageClustering(proximityGraph, threshold)
-    local distanceThreshold = 25*25
+function FilterDendrogram(dendrogram, distanceCutOff)
+    return dendrogram:Map(function(baseKey, baseEntry)
+        return  { ConnectedPoints = baseEntry.ConnectedPoints
+                , UnconnectedPoints = baseEntry.UnconnectedPoints:Filter(function(k, v) return v.DistanceSqr <= distanceCutOff end)
+                , PointData = baseEntry.PointData
+                }
+        end)
+end
+
+function CompleteLinkageClustering(proximityGraph, distanceThreshold)
+    --local distanceThreshold = 30*30
 
     -- proximityGraph:ForEach(function(k,v) LOG('* AI-Overlord: CompleteLinkageClustering: '
     --         ..k
@@ -304,20 +345,20 @@ function CompleteLinkageClustering(proximityGraph, threshold)
     --         ..' at ('..v.position[1]..','..v.position[2]..','..v.position[3]..')') end)
 
     local pointsToMerge = FindClosestPoints(proximityGraph)
-    if pointsToMerge.SelectedPoints then
-        LOG('* AI-Overlord: CompleteLinkageClustering: linking '
-            ..tostring(pointsToMerge.SelectedPoints[1])
-            ..' and '
-            ..tostring(pointsToMerge.SelectedPoints[2])
-            ..' at distance (squared): '
-            ..tostring(pointsToMerge.DistanceSqr))
-    else
-        LOG('* AI-Overlord: CompleteLinkageClustering: no links to make')
-    end
+    -- if pointsToMerge.SelectedPoints then
+    --     LOG('* AI-Overlord: CompleteLinkageClustering: linking '
+    --         ..tostring(pointsToMerge.SelectedPoints[1])
+    --         ..' and '
+    --         ..tostring(pointsToMerge.SelectedPoints[2])
+    --         ..' at distance (squared): '
+    --         ..tostring(pointsToMerge.DistanceSqr))
+    -- else
+    --     LOG('* AI-Overlord: CompleteLinkageClustering: no links to make')
+    -- end
 
-    local i =0
+    --local i =0
     local resultantGraph = proximityGraph
-    while pointsToMerge.SelectedPoints and  i < 5 do
+    while pointsToMerge.SelectedPoints do
         local resultantPoint = { ConnectedPoints = {}, UnconnectedPoints = {}, PointData = {}}
 
         local keyOfUpdatedPoint = pointsToMerge.SelectedPoints[1]
@@ -331,8 +372,8 @@ function CompleteLinkageClustering(proximityGraph, threshold)
         local countOfPositions = table.getsize(resultantPoint.ConnectedPoints)
         local sumOfPositions = resultantPoint.ConnectedPoints:Map(function(k, v) return v.position end)
                                                              :Reduce({0,0,0}, function(k, t, v)
-                                                                    LOG('* AI-Overlord: Base Value ['..t[1]..','..t[2]..','..t[3]..']')
-                                                                    LOG('* AI-Overlord: Extra Value ['..v[1]..','..v[2]..','..v[3]..']')
+                                                                    -- LOG('* AI-Overlord: Base Value ['..t[1]..','..t[2]..','..t[3]..']')
+                                                                    -- LOG('* AI-Overlord: Extra Value ['..v[1]..','..v[2]..','..v[3]..']')
                                                                     return { t[1]+v[1], t[2]+v[2], t[3]+v[3] }
                                                                 end)
         resultantPoint.PointData = { sumOfPositions[1] / countOfPositions, sumOfPositions[2] / countOfPositions, sumOfPositions[3] / countOfPositions }
@@ -347,25 +388,30 @@ function CompleteLinkageClustering(proximityGraph, threshold)
 
         local unconnectedPoints = utils.Stream:createStream()
         resultantGraph:ForEach(function(k, v) unconnectedPoints[k] = { DistanceSqr = GetRelativePosition(resultantPoint.PointData, v.PointData) } end)
-        LOG('* AI-Overlord: New Link Record: ['..resultantPoint.PointData[1]..','..resultantPoint.PointData[2]..','..resultantPoint.PointData[3]..']')
-        resultantPoint.ConnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: Connected '..keyOfUpdatedPoint..'->'..k) end)
-        unconnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: '..keyOfUpdatedPoint..'->'..k..' dist: '..v.DistanceSqr) end)
+        --LOG('* AI-Overlord: New Link Record: ['..resultantPoint.PointData[1]..','..resultantPoint.PointData[2]..','..resultantPoint.PointData[3]..']')
+        --resultantPoint.ConnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: Connected '..keyOfUpdatedPoint..'->'..k) end)
+        --unconnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: '..keyOfUpdatedPoint..'->'..k..' dist: '..v.DistanceSqr) end)
         resultantPoint.UnconnectedPoints = unconnectedPoints:Filter(function (k, v) return (v.DistanceSqr <= distanceThreshold) and (v.DistanceSqr > 0) end)
         resultantGraph[keyOfUpdatedPoint] = resultantPoint
 
-        LOG('* AI-Overlord: Linkage Result Update:')
-        resultantGraph:ForEach(function(baseKey,v)
-            v.UnconnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: '..baseKey..'->'..k..' dist: '..v.DistanceSqr) end)
-        end)
+        -- LOG('* AI-Overlord: Linkage Result Update:')
+        -- resultantGraph:ForEach(function(baseKey,v)
+        --     v.UnconnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: '..baseKey..'->'..k..' dist: '..v.DistanceSqr) end)
+        -- end)
 
         pointsToMerge = FindClosestPoints(resultantGraph)
-        i = i + 1
+        --i = i + 1
     end
+
+    LOG('* AI-Overlord: Linkage Result Update:')
+    resultantGraph:ForEach(function(baseKey,v)
+        v.ConnectedPoints:ForEach(function(k,v) LOG('* AI-Overlord: '..baseKey..'->'..k) end)
+    end)
 end
 
 function FindClosestPoints(proximityGraph)
     return proximityGraph:Reduce(
-        {SelectedPoints = nil, DistanceSqr = 5793^2}
+        {SelectedPoints = nil, DistanceSqr = 5793*5793}
       , function(k, t, v)
           return v.UnconnectedPoints:Reduce(t, function(k1, t1, v1)
             if v1.DistanceSqr < t1.DistanceSqr then

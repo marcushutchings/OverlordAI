@@ -1,4 +1,26 @@
 
+append = function(tbl1, tbl2)
+    local t = Stream:createStream()
+    local i = 1
+    for k, v in pairs(tbl1) do
+        t[i] = v
+        i = i + 1
+    end
+    for k, v in pairs(tbl2) do
+        t[i] = v
+        i = i + 1
+    end
+    return t
+end
+
+concatHashToArray = function(t1, t2)
+    for i,v in pairs(t2) do
+        if v != nil then
+            t1[table.getn(t1)+1] = v
+        end
+    end
+    return t1
+end
 
 filter = function(tbl, f)
     local t = Stream:createStream()
@@ -67,7 +89,8 @@ reduce = function(tbl, initialValue, f)
 end
 
 Stream =
-{ Filter = filter
+{ ConcatHashToArray = concatHashToArray
+, Filter = filter
 , Find = find
 , ForEach = forEach
 , Join = join
@@ -82,3 +105,17 @@ function Stream:createStream(obj)
     setmetatable(newStream, self)
     return newStream
 end
+
+function pipe( ... )
+    local filters = arg
+    return function( input, output )
+        for data in input do
+            local current = data
+            for _, filter in ipairs( filters ) do
+                current = filter( current )
+            end
+            output( current )
+        end
+    end
+end
+
